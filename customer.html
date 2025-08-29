@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Restaurant – Customer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif
+        }
+
+        .star {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: gray;
+        }
+
+        .star.selected {
+            color: gold;
+        }
+
+        /* Dark mode styles */
+        .dark body {
+            background-color: #1a202c;
+            color: #f7fafc;
+        }
+
+        .dark .bg-gray-100 {
+            background-color: #1a202c;
+        }
+
+        .dark .bg-white {
+            background-color: #2d3748;
+        }
+
+        .dark .text-gray-900 {
+            color: #f7fafc;
+        }
+
+        .dark .text-gray-600,
+        .dark .text-gray-500 {
+            color: #cbd5e0;
+        }
+
+        .dark .border,
+        .dark .border-2 {
+            border-color: #4a5568;
+        }
+
+        .dark input,
+        .dark select,
+        .dark textarea {
+            background-color: #4a5568;
+            color: #f7fafc;
+            border-color: #718096;
+        }
+
+        .dark .bg-gray-200 {
+            background-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .dark .bg-indigo-600 {
+            background-color: #4c51bf;
+        }
+
+        .dark .bg-purple-600 {
+            background-color: #6b46c1;
+        }
+
+        .dark .bg-green-600 {
+            background-color: #38a169;
+        }
+
+        .dark .bg-blue-600 {
+            background-color: #3182ce;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 transition-colors duration-300">
+    <div class="max-w-5xl mx-auto p-4">
+        <header class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-bold">🍽️ Customer</h1>
+            <div class="flex items-center gap-2">
+                <select id="language" class="border rounded px-2 py-1">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी</option>
+                    <option value="te">తెలుగు</option>
+                </select>
+                <button id="darkToggle" class="px-3 py-1.5 rounded bg-gray-200">🌗</button>
+            </div>
+        </header>
+
+        <section id="qrSection" class="border-2 border-dashed rounded-xl bg-white p-6 text-center">
+            <p class="text-gray-600 mb-3" id="qrMsg">Click the QR to start</p>
+            <img id="qrImg" src="https://placehold.co/180x180/4f46e5/ffffff?text=Scan+Me" alt="QR"
+                class="mx-auto rounded-lg cursor-pointer">
+        </section>
+
+        <div id="tableModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-6 w-80">
+                <h2 class="text-lg font-semibold mb-3">Enter Details</h2>
+                <input id="custName" type="text" class="w-full border rounded px-3 py-2 mb-2" placeholder="Your Name">
+                <input id="custGmail" type="email" class="w-full border rounded px-3 py-2 mb-2"
+                    placeholder="Your Gmail (example@gmail.com)">
+                <input id="tableInput" type="number" min="1" class="w-full border rounded px-3 py-2"
+                    placeholder="Table Number e.g., 5">
+                <p id="tableErr" class="text-sm text-red-600 mt-1 hidden">Please fill all details correctly (use a valid Gmail).</p>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button id="cancelTable" class="px-3 py-1.5 rounded bg-gray-200">Cancel</button>
+                    <button id="confirmTable" class="px-3 py-1.5 rounded bg-indigo-600 text-white">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <section id="menuWrap" class="hidden mt-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="flex items-center gap-2 w-full md:w-1/2">
+                    <input id="search" placeholder="Search menu..." class="w-full border rounded px-3 py-2" />
+                </div>
+                <div class="text-sm text-gray-600" id="welcome"></div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mt-4" id="categoryButtons">
+                <button class="px-3 py-1.5 rounded-full text-sm font-medium border border-gray-400 bg-indigo-600 text-white" data-category="All">All</button>
+                <button class="px-3 py-1.5 rounded-full text-sm font-medium border border-gray-400 bg-gray-200" data-category="Tiffins">Tiffins</button>
+                <button class="px-3 py-1.5 rounded-full text-sm font-medium border border-gray-400 bg-gray-200" data-category="Lunch">Lunch</button>
+                <button class="px-3 py-1.5 rounded-full text-sm font-medium border border-gray-400 bg-gray-200" data-category="Desserts">Desserts</button>
+                <button class="px-3 py-1.5 rounded-full text-sm font-medium border border-gray-400 bg-gray-200" data-category="Icecreams">Icecreams</button>
+                <button class="px-3 py-1.5 rounded-full text-sm font-medium border border-gray-400 bg-gray-200" data-category="Drinks">Drinks</button>
+            </div>
+
+            <h3 class="text-xl font-semibold mt-4" id="recTitle">Recommended</h3>
+            <div id="recs" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2"></div>
+
+            <h3 class="text-xl font-semibold mt-6" id="menuTitle">Menu</h3>
+            <div id="menu" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2"></div>
+
+            <div class="mt-8 grid lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl p-4 shadow border">
+                    <h4 class="font-bold mb-2" id="cartTitle">Your Cart</h4>
+                    <ul id="cart" class="divide-y"></ul>
+                    <div class="flex justify-between mt-3 font-semibold">
+                        <span>Total</span> <span id="total">₹0.00</span>
+                    </div>
+                    <div class="flex justify-end gap-2 mt-3">
+                        <button id="clear" class="px-3 py-1.5 rounded bg-gray-200">Clear</button>
+                        <button id="place" class="px-3 py-1.5 rounded bg-indigo-600 text-white">Place Order</button>
+                    </div>
+                    <p class="text-sm text-amber-600 mt-2" id="loyalty">Loyalty: 0 pts</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 shadow border">
+                    <h4 class="font-bold mb-2">My Orders</h4>
+                    <div id="myOrders" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button id="voiceBtn" class="px-4 py-2 rounded bg-purple-600 text-white">🎤 Voice Order</button>
+            </div>
+        </section>
+
+        <section id="paymentSection" class="hidden mt-6 bg-white p-6 rounded-xl shadow border">
+            <h3 class="text-xl font-bold mb-4">💳 Payment</h3>
+            <p class="mb-2">Order ID: <span id="payOrderId"></span></p>
+            <p class="mb-4">Amount: <span id="payAmount"></span></p>
+            <label class="block mb-2 font-semibold">Select Payment Method:</label>
+            <select id="payMethod" class="border rounded px-3 py-2 w-full mb-4">
+                <option value="UPI">UPI</option>
+                <option value="Card">Card</option>
+                <option value="Cash">Cash on Delivery</option>
+            </select>
+            <div class="flex justify-end gap-2">
+                <button id="cancelPayment" class="px-3 py-1.5 rounded bg-gray-200">Cancel</button>
+                <button id="confirmPayment" class="px-3 py-1.5 rounded bg-green-600 text-white">Pay Now</button>
+            </div>
+        </section>
+
+        <section id="feedbackSection" class="hidden mt-6 bg-white p-6 rounded-xl shadow border">
+            <h3 class="text-xl font-bold mb-4">📝 Feedback</h3>
+            <input id="fbName" type="text" class="w-full border rounded p-2 mb-2" placeholder="Your Name">
+            <input id="fbGmail" type="email" class="w-full border rounded p-2 mb-2"
+                placeholder="Your Gmail (example@gmail.com)">
+            <textarea id="feedbackText" rows="3" class="w-full border rounded p-2 mb-3"
+                placeholder="Write your feedback here..."></textarea>
+            <div class="flex justify-end gap-2">
+                <button id="cancelFeedback" class="px-3 py-1.5 rounded bg-gray-200">Cancel</button>
+                <button id="submitFeedback" class="px-3 py-1.5 rounded bg-blue-600 text-white">Submit</button>
+            </div>
+            <div id="feedbackList" class="mt-4 space-y-2"></div>
+        </section>
+
+    </div>
+
+    <script>
+        (function () {
+            const $ = id => document.getElementById(id);
+
+            const d = {
+                en: { rec: "Recommended", menu: "Menu", cart: "Your Cart", clickqr: "Click the QR to start", welcome: t => `Ordering for Table ${t}` },
+                hi: { rec: "अनुशंसित", menu: "मेनू", cart: "आपकी टोकरी", clickqr: "शुरू करने के लिए QR पर क्लिक करें", welcome: t => `टेबल ${t} के लिए ऑर्डर` },
+                te: { rec: "సిఫార్సు", menu: "మెనూ", cart: "మీ కార్ట్", clickqr: "ప్రారంభించడానికి QR పై నొక్కండి", welcome: t => `టేబుల్ ${t} కోసం ఆర్డర్` }
+            };
+
+            const defaultMenu = [
+                { id: "idly", name: "Idly", price: 40, desc: "Steamed rice cakes", category: "Tiffins", stock: true },
+                { id: "dosa", name: "Dosa", price: 40, desc: "Crispy crepe", category: "Tiffins", stock: true },
+                { id: "vada", name: "Vada", price: 40, desc: "Savory fritter", category: "Tiffins", stock: true },
+                { id: "masaladosa", name: "Masala Dosa", price: 50, desc: "Crispy crepe with spiced potato filling", category: "Tiffins", stock: true },
+                { id: "vegmeals", name: "Veg Meals", price: 80, desc: "Assorted vegetarian dishes", category: "Lunch", stock: true },
+                { id: "nonvegmeals", name: "Non Veg Meals", price: 120, desc: "Assorted non-vegetarian dishes", category: "Lunch", stock: true },
+                { id: "cake", name: "Cake", price: 30, desc: "Slice of sponge cake", category: "Desserts", stock: true },
+                { id: "pudding", name: "Pudding", price: 50, desc: "Creamy dessert", category: "Desserts", stock: true },
+                { id: "gulabjamun", name: "Gulab Jamun", price: 40, desc: "Sweet milk solids dumplings", category: "Desserts", stock: true },
+                { id: "vanilla", name: "Vanilla", price: 30, desc: "Vanilla flavored ice cream", category: "Icecreams", stock: true },
+                { id: "strawberry", name: "Strawberry", price: 30, desc: "Strawberry flavored ice cream", category: "Icecreams", stock: true },
+                { id: "butterscotch", name: "Butterscotch", price: 30, desc: "Butterscotch flavored ice cream", category: "Icecreams", stock: true },
+                { id: "thumpsup", name: "Thumpsup", price: 20, desc: "Carbonated soft drink", category: "Drinks", stock: true },
+                { id: "mazaa", name: "Mazaa", price: 20, desc: "Mango flavored drink", category: "Drinks", stock: true },
+                { id: "sprite", name: "Sprite", price: 20, desc: "Lemon-lime flavored drink", category: "Drinks", stock: true },
+                { id: "water", name: "Water", price: 20, desc: "Bottled drinking water", category: "Drinks", stock: true }
+            ];
+            const fmt = n => "₹" + n.toFixed(2);
+            const bc = ('BroadcastChannel' in window) ? new BroadcastChannel('qr-restaurant') : null;
+
+            let lang = localStorage.getItem('lang') || 'en';
+            let table = null;
+            // Force reset the menu data to the new default menu
+            let menu = defaultMenu; 
+            localStorage.setItem('menu', JSON.stringify(menu));
+
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            let loyalty = parseInt(localStorage.getItem('loyalty') || '0', 10);
+            let currentOrderId = null;
+            let ratings = JSON.parse(localStorage.getItem('ratings') || '{}');
+            let feedbacks = JSON.parse(localStorage.getItem('feedbacks') || '[]');
+            let customer = JSON.parse(localStorage.getItem('customer') || '{"name":"","gmail":""}');
+            let currentCategory = 'All';
+
+
+            function isValidGmail(s) {
+                if (!s) return false;
+                s = s.trim();
+                return /^[^@\s]+@gmail\.com$/i.test(s);
+            }
+
+            function t(key) {
+                return d[lang][key] || key
+            }
+
+            function save() {
+                localStorage.setItem('cart', JSON.stringify(cart));
+                localStorage.setItem('loyalty', String(loyalty));
+                localStorage.setItem('ratings', JSON.stringify(ratings));
+                localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+                localStorage.setItem('customer', JSON.stringify(customer));
+            }
+
+            function renderTexts() {
+                $('recTitle').textContent = t('rec');
+                $('menuTitle').textContent = t('menu');
+                $('cartTitle').textContent = t('cart');
+                $('qrMsg').textContent = t('clickqr');
+                $('welcome').textContent = table ? d[lang].welcome(table) + (customer.name ? ` • ${customer.name}` : '') : '';
+            }
+
+            function renderStars(itemId) {
+                let rate = ratings[itemId] || 0;
+                let stars = '';
+                for (let i = 1; i <= 5; i++) {
+                    stars += `<span class="star ${i <= rate ? 'selected' : ''}" data-item="${itemId}" data-rate="${i}">★</span>`;
+                }
+                return `<div class="mt-2">${stars}</div>`;
+            }
+
+            function card(item) {
+                const disabled = !item.stock;
+                const cartItem = cart.find(c => c.id === item.id);
+                const qty = cartItem ? cartItem.qty : 0;
+                return `<div class="bg-white rounded-xl p-4 shadow border">
+                    <h4 class="font-semibold">${item.name}</h4>
+                    <p class="text-sm text-gray-600">${item.desc}</p>
+                    <div class="flex justify-between items-center mt-3">
+                        <span class="font-bold text-indigo-600">${fmt(item.price)}</span>
+                        <div class="flex items-center gap-1">
+                            <button data-act="dec" data-id="${item.id}" class="px-2 py-1 rounded bg-gray-200">-</button>
+                            <span class="px-2 py-1 text-sm font-medium" id="qty-${item.id}">${qty}</span>
+                            <button data-act="inc" data-id="${item.id}" class="px-2 py-1 rounded ${disabled ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-600 text-white'}" ${disabled ? 'disabled' : ''}>+</button>
+                        </div>
+                    </div>
+                    ${renderStars(item.id)}
+                </div>`;
+            }
+
+            function add(id, delta) {
+                const item = menu.find(x => x.id === id);
+                if (!item || !item.stock) return;
+                const ex = cart.find(x => x.id === id);
+                if (ex) {
+                    ex.qty += delta;
+                    if (ex.qty <= 0) cart = cart.filter(x => x.id !== id);
+                } else if (delta > 0) {
+                    cart.push({ id: item.id, name: item.name, price: item.price, qty: 1 });
+                    loyalty += 10;
+                }
+                renderCart();
+                save();
+                renderMenu();
+            }
+
+            function renderMenu(category = currentCategory) {
+                const q = $('search').value.trim().toLowerCase();
+                
+                let filteredMenu = menu;
+                if (category !== 'All') {
+                    filteredMenu = menu.filter(m => m.category === category);
+                }
+                
+                const available = filteredMenu.filter(m => m.stock && m.name.toLowerCase().includes(q));
+                
+                const recs = [...available].sort((a, b) => b.price - a.price).slice(0, 3);
+                $('recs').innerHTML = recs.map(card).join('') || '<p class="text-gray-500">No recommendations</p>';
+                $('menu').innerHTML = available.map(card).join('') || '<p class="text-gray-500">No items</p>';
+                
+                const buttons = document.querySelectorAll('#categoryButtons button');
+                buttons.forEach(btn => {
+                    if (btn.getAttribute('data-category') === category) {
+                        btn.classList.add('bg-indigo-600', 'text-white');
+                        btn.classList.remove('bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-indigo-600', 'text-white');
+                        btn.classList.add('bg-gray-200');
+                    }
+                });
+                
+                currentCategory = category;
+            }
+
+
+            function renderCart() {
+                const list = $('cart');
+                list.innerHTML = '';
+                let total = 0;
+                if (cart.length === 0) {
+                    list.innerHTML = '<li class="py-3 text-gray-500">Cart is empty</li>';
+                }
+                cart.forEach(it => {
+                    total += it.price * it.qty;
+                    const li = document.createElement('li');
+                    li.className = 'py-2 flex items-center justify-between';
+                    li.innerHTML = `<span>${it.name} × ${it.qty}</span><div class="flex items-center gap-1">
+                        <button class="px-2 py-1 rounded bg-gray-200" data-act="cdec" data-id="${it.id}">-</button>
+                        <button class="px-2 py-1 rounded bg-gray-200" data-act="cinc" data-id="${it.id}">+</button>
+                        <span class="w-16 text-right">${fmt(it.price * it.qty)}</span></div>`;
+                    list.appendChild(li);
+                });
+                $('total').textContent = fmt(total);
+                $('loyalty').textContent = 'Loyalty: ' + loyalty + ' pts';
+            }
+
+            function placeOrder() {
+                if (!table) {
+                    alert('Please select table first');
+                    return;
+                }
+                if (cart.length === 0) {
+                    alert('Cart is empty');
+                    return;
+                }
+                const order = {
+                    id: 'ORD-' + Date.now(),
+                    table: table,
+                    items: cart.map(c => ({ id: c.id, name: c.name, price: c.price, qty: c.qty })),
+                    status: 'Pending',
+                    eta: '',
+                    createdAt: new Date().toISOString(),
+                    paid: false,
+                    paymentMethod: null,
+                    customer: { name: customer.name || '', gmail: customer.gmail || '' }
+                };
+                const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+                orders.push(order);
+                localStorage.setItem('orders', JSON.stringify(orders));
+                if (bc) bc.postMessage({ type: 'NEW_ORDER', orderId: order.id });
+                currentOrderId = order.id;
+                showPayment(order);
+            }
+
+            function showPayment(order) {
+                $('menuWrap').classList.add('hidden');
+                $('paymentSection').classList.remove('hidden');
+                $('payOrderId').textContent = order.id;
+                const amt = order.items.reduce((s, i) => s + i.price * i.qty, 0);
+                $('payAmount').textContent = fmt(amt);
+            }
+
+            function confirmPayment() {
+                const method = $('payMethod').value;
+                const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+                const idx = orders.findIndex(o => o.id === currentOrderId);
+                if (idx >= 0) {
+                    orders[idx].paid = true;
+                    orders[idx].paymentMethod = method;
+                    localStorage.setItem('orders', JSON.stringify(orders));
+                    if (bc) bc.postMessage({ type: 'UPDATE_ORDER', orderId: orders[idx].id });
+                }
+                cart = [];
+                save();
+                renderCart();
+                $('paymentSection').classList.add('hidden');
+                $('menuWrap').classList.remove('hidden');
+                renderMyOrders();
+                alert('Payment Successful with ' + method);
+                $('feedbackSection').classList.remove('hidden');
+                if (customer.name) $('fbName').value = customer.name;
+                if (customer.gmail) $('fbGmail').value = customer.gmail;
+                renderFeedbacks();
+            }
+
+            function progressFromStatus(s) {
+                switch (s) {
+                    case 'Pending':
+                        return 25;
+                    case 'Preparing':
+                        return 60;
+                    case 'Ready':
+                        return 90;
+                    case 'Served':
+                        return 100;
+                    default:
+                        return 10
+                }
+            }
+
+            function renderMyOrders() {
+                const box = $('myOrders');
+                box.innerHTML = '';
+                if (!table) {
+                    box.innerHTML = '<p class="text-gray-500">No orders yet</p>';
+                    return;
+                }
+                const orders = (JSON.parse(localStorage.getItem('orders') || '[]')).filter(o => o.table === table);
+                if (orders.length === 0) {
+                    box.innerHTML = '<p class="text-gray-500">No orders yet</p>';
+                    return;
+                }
+                orders.slice().reverse().forEach(o => {
+                    const p = progressFromStatus(o.status);
+                    const wrap = document.createElement('div');
+                    wrap.className = 'border rounded p-3';
+                    wrap.innerHTML = `<div class="flex justify-between"><span class="font-semibold">${o.id}</span>
+                        <span>${o.status}${o.eta ? (' • ETA: ' + o.eta) : ''}${o.paid ? ' • 💳 Paid' : ''}</span></div>
+                        <div class="w-full bg-gray-200 rounded h-2 mt-2"><div class="h-2 rounded bg-indigo-600" style="width:${p}%"></div></div>`;
+                    box.appendChild(wrap);
+                });
+            }
+
+            function applyMenuStockUpdate() {
+                const stored = JSON.parse(localStorage.getItem('menu') || 'null');
+                if (stored) {
+                    menu = stored;
+                }
+                renderMenu();
+            }
+
+            function renderFeedbacks() {
+                const list = $('feedbackList');
+                list.innerHTML = '';
+                if (feedbacks.length === 0) {
+                    list.innerHTML = '<p class="text-gray-500">No feedback yet</p>';
+                    return;
+                }
+                feedbacks.slice().reverse().forEach(f => {
+                    if (typeof f === 'string') {
+                        const div = document.createElement('div');
+                        div.className = 'border rounded p-2';
+                        const by = (customer && customer.name) ? ` — ${customer.name} (${customer.gmail||'no email'})` : '';
+                        div.textContent = f + by;
+                        list.appendChild(div);
+                    } else {
+                        const div = document.createElement('div');
+                        div.className = 'border rounded p-2';
+                        const name = f.name || 'Anonymous';
+                        const gm = f.gmail || 'no email';
+                        div.innerHTML = `<p class="font-semibold">${name} (${gm})</p><p>${f.text||''}</p>`;
+                        list.appendChild(div);
+                    }
+                });
+            }
+
+            // Event Listeners
+            $('qrImg').addEventListener('click', () => {
+                $('custName').value = '';
+                $('custGmail').value = '';
+                $('tableInput').value = '';
+                $('tableErr').classList.add('hidden');
+                $('tableModal').classList.remove('hidden');
+            });
+            $('cancelTable').addEventListener('click', () => $('tableModal').classList.add('hidden'));
+            $('confirmTable').addEventListener('click', () => {
+                const name = $('custName').value.trim();
+                const gmail = $('custGmail').value.trim();
+                const val = parseInt($('tableInput').value, 10);
+                const allowed = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                if (!name || !isValidGmail(gmail) || !allowed.includes(val)) {
+                    $('tableErr').classList.remove('hidden');
+                    return;
+                }
+                customer = { name, gmail };
+                table = val;
+                localStorage.setItem('currentTable', JSON.stringify(table));
+                cart = [];
+                save();
+                renderCart();
+                $('tableModal').classList.add('hidden');
+                $('qrSection').classList.add('hidden');
+                $('menuWrap').classList.remove('hidden');
+                $('welcome').textContent = d[lang].welcome(table) + " • " + name;
+                $('qrImg').src = `https://placehold.co/180x180/4f46e5/ffffff?text=Table+${val}`;
+                renderMyOrders();
+            });
+
+            $('search').addEventListener('input', () => renderMenu(currentCategory));
+            
+            $('categoryButtons').addEventListener('click', e => {
+                const button = e.target.closest('button');
+                if (button) {
+                    const category = button.getAttribute('data-category');
+                    renderMenu(category);
+                }
+            });
+
+            $('menuWrap').addEventListener('click', e => {
+                const a = e.target.closest('button');
+                if (a) {
+                    const id = a.getAttribute('data-id');
+                    const act = a.getAttribute('data-act');
+                    if (act === 'inc') add(id, 1);
+                    if (act === 'dec') add(id, -1);
+                }
+            });
+
+            $('cart').addEventListener('click', e => {
+                const a = e.target.closest('button');
+                if (!a) return;
+                const id = a.getAttribute('data-id');
+                const act = a.getAttribute('data-act');
+                if (act === 'cinc') add(id, 1);
+                if (act === 'cdec') add(id, -1);
+            });
+            $('clear').addEventListener('click', () => {
+                cart = [];
+                renderCart();
+                save();
+                renderMenu();
+            });
+            $('place').addEventListener('click', placeOrder);
+            $('language').addEventListener('change', e => {
+                lang = e.target.value;
+                localStorage.setItem('lang', lang);
+                renderTexts();
+            });
+            $('darkToggle').addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+            });
+            $('voiceBtn').addEventListener('click', () => {
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SR) {
+                    alert('Speech recognition not supported');
+                    return;
+                }
+                const r = new SR();
+                r.lang = 'en-US';
+                r.onresult = (ev) => {
+                    const said = ev.results[0][0].transcript.toLowerCase();
+                    const hit = menu.find(m => said.includes(m.name.toLowerCase()));
+                    if (hit) {
+                        add(hit.id, 1);
+                        alert('Added: ' + hit.name);
+                    } else {
+                        alert('Did not match any item');
+                    }
+                };
+                r.start();
+            });
+            $('confirmPayment').addEventListener('click', confirmPayment);
+            $('cancelPayment').addEventListener('click', () => {
+                $('paymentSection').classList.add('hidden');
+                $('menuWrap').classList.remove('hidden');
+            });
+
+            document.body.addEventListener('click', e => {
+                if (e.target.classList.contains('star')) {
+                    const itemId = e.target.getAttribute('data-item');
+                    const rate = parseInt(e.target.getAttribute('data-rate'), 10);
+                    if (ratings[itemId] === rate) {
+                        delete ratings[itemId];
+                    } else {
+                        ratings[itemId] = rate;
+                    }
+                    save();
+                    renderMenu();
+                }
+            });
+
+            $('submitFeedback').addEventListener('click', () => {
+                const name = $('fbName').value.trim() || (customer.name || '');
+                const gmail = $('fbGmail').value.trim() || (customer.gmail || '');
+                const txt = $('feedbackText').value.trim();
+                if (!name || !isValidGmail(gmail) || !txt) {
+                    alert('Please provide your name, a valid Gmail, and feedback text.');
+                    return;
+                }
+                feedbacks.push({ name, gmail, text: txt });
+                save();
+                $('feedbackText').value = '';
+                renderFeedbacks();
+                alert('Thank you for your feedback!');
+            });
+            $('cancelFeedback').addEventListener('click', () => $('feedbackSection').classList.add('hidden'));
+
+            if (bc) {
+                bc.onmessage = (msg) => {
+                    if (!msg || !msg.data) return;
+                    if (msg.data.type === 'UPDATE_ORDER' || msg.data.type === 'NEW_ORDER') renderMyOrders();
+                    if (msg.data.type === 'MENU_UPDATE') applyMenuStockUpdate();
+                };
+            }
+            window.addEventListener('storage', e => {
+                if (e.key === 'orders') renderMyOrders();
+                if (e.key === 'menu') applyMenuStockUpdate();
+                if (e.key === 'ratings') renderMenu();
+                if (e.key === 'feedbacks') renderFeedbacks();
+                if (e.key === 'customer') {
+                    customer = JSON.parse(localStorage.getItem('customer') || '{"name":"","gmail":""}');
+                    renderTexts();
+                }
+            });
+
+            // INIT
+            // This function call ensures that the menu is initialized with the new data
+            // and the `localStorage` item is updated, which is crucial for the change to stick.
+            applyMenuStockUpdate(); 
+            renderTexts();
+            localStorage.removeItem('currentTable');
+            table = null;
+            localStorage.removeItem('customer');
+            customer = { name: "", gmail: "" };
+            $('qrSection').classList.remove('hidden');
+            $('menuWrap').classList.add('hidden');
+            $('welcome').textContent = '';
+            renderMenu();
+            renderCart();
+            renderMyOrders();
+            renderFeedbacks();
+        })();
+    </script>
+</body>
+</html>
